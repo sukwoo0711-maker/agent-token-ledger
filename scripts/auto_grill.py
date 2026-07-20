@@ -18,16 +18,20 @@ def main() -> None:
         (root / relative).read_text(encoding="utf-8")
         for relative in [
             "docs/DESIGN.md",
+            "docs/LLM_FOOTER_RULE.md",
+            "docs/FOOTER_EMISSION_GRILL.md",
             "src/agent_token_ledger/recorder.py",
             "src/agent_token_ledger/report.py",
             "tests/test_attribution.py",
             "tests/test_concurrency.py",
+            "tests/test_footer.py",
         ]
     )
     prompt = f"""ADVERSARIAL REVIEW ONLY. Do not summarize the project. Do not praise it.
-Find concrete counterexamples that make per-agent percentages or parentage wrong.
+Find concrete counterexamples that make per-agent percentages, parentage, or footer emission count wrong.
 Inspect malformed traces, duplicate instrumentation, nested agents, failed calls, concurrency,
-unknown pricing, and rounding. If a suspected issue is already prevented, omit it.
+unknown pricing, rounding, ten-agent fan-out, detached agents, and LLM-generated footer recursion.
+If a suspected issue is already prevented, omit it.
 Output only lines in this format:
 FINDING | severity | exact trigger | wrong result | exact repair | missing regression test
 Return 3 to 6 findings. If none exist, output exactly NO_FINDINGS.

@@ -66,6 +66,7 @@ The exporter maps agent spans to `gen_ai.operation.name=invoke_agent` and emits 
 See [DESIGN.md](docs/DESIGN.md) for accounting rules and [AUTO_GRILL.md](docs/AUTO_GRILL.md) for adversarial review findings.
 
 For personal AI stacks, copy the provider-neutral [Portable LLM Footer rule](docs/LLM_FOOTER_RULE.md). The [1:1 gap analysis](docs/RULE_GAP_ANALYSIS.md) explains how it extends a basic per-agent/model/token footer with coverage, enforcement, and privacy requirements.
+The [footer emission auto-grill](docs/FOOTER_EMISSION_GRILL.md) defines why ten subagents still produce one terminal root footer.
 
 ## Evidence and references
 

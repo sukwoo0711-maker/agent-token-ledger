@@ -19,6 +19,8 @@ The exact pre-existing personal rule file was not found locally. The baseline be
 | Outcome quality | Missing | Token ratio is easy to understand | Lowest-token run may be wrong or unverifiable | Cost per successful task and recovery rate |
 | Privacy | Missing | None | Footer or trace may leak prompts and tool data | Operational metadata only by default; sensitive content opt-in |
 | Missing telemetry | Missing | None | Models may invent convincing usage numbers | Emit a single unavailable line; never estimate from conversation |
+| Footer emission boundary | Ambiguous | Simplicity | Ten subagents may produce eleven user-visible footers | Exactly one terminal root footer; subagents record telemetry only |
+| Footer-generation overhead | Missing | None | LLM-generated footer creates circular, incomplete accounting | Deterministic renderer after trace closure |
 
 ## Critical conclusion
 

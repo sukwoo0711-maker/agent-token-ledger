@@ -7,7 +7,21 @@ The block below is intentionally provider-neutral. It can be pasted into a syste
 ```md
 ## LLM Footer
 
-For every completed user request, append a compact `LLM usage` footer when runtime telemetry is available.
+For every completed root user request, append exactly one compact, user-visible `LLM usage` footer when runtime telemetry is available.
+
+Emission rules:
+
+- Subagents record telemetry but must not emit user-visible footers when they finish.
+- The root orchestrator waits for every included subagent to reach a terminal state, closes the trace after final synthesis, aggregates all measured usage, and emits one consolidated footer on the terminal root response.
+- Do not emit a root footer while any included agent is still `running`.
+- Failed, cancelled, and timed-out agents remain in the root footer with measured partial usage and terminal status.
+- Retries, streaming chunks, progress messages, tool completions, and intermediate assistant messages do not create additional footers.
+- A detached or long-lived background agent that outlives the root response is excluded from the closed root snapshot and must be declared as detached or incomplete telemetry. Its later completion must not append a second footer to the already completed root response.
+- A subagent may emit one `Scope: agent` footer only when its result is delivered as an independent user-facing response, such as a separately opened agent thread. Its footer text must not be copied into the parent response; the parent aggregates raw telemetry instead.
+- Every footer declares `Scope: root` or `Scope: agent` and a terminal state.
+- Render the footer deterministically after the measured trace is closed. Do not ask an LLM to generate the footer, because the generation itself would add unaccounted tokens and create circular accounting.
+- Enforce idempotency with an atomic `footer_emitted` marker keyed by trace ID. A renderer alone cannot guarantee exactly-once delivery. In distributed systems, persist the marker in shared durable storage rather than process memory.
+- Never relabel a root report as `Scope: agent`. Build an agent-scoped snapshot with that agent's subtree as its denominator before emitting an independent agent footer.
 
 The footer must describe the entire root execution trace for that one user request, including nested agents and model calls. Report:
 
@@ -50,12 +64,13 @@ Never fabricate a detailed footer from conversational context or model self-repo
 ---
 LLM usage
 Trace: <trace-id> | <total> tokens | <wall-time> | cost <amount-or-N/A>
+Scope: root | state complete
 Coverage: attribution <pct> | cost <pct>
 Agents: exclusive tokens / trace share / subtree tokens
-- orchestrator [planning]: 147 / 20.68% / 711
-- +-- researcher [analysis]: 136 / 19.13% / 136
+- orchestrator [planning, status=ok]: 147 / 20.68% / 711
+- +-- researcher [analysis, status=ok]: 136 / 19.13% / 136
 Models: local-small 409 (57.52%), local-deep 302 (42.48%)
 Accounting: exclusive shares partition measured usage; subtree values overlap by design.
 ```
 
-The concrete renderer is available as `agent_token_ledger.render_footer`.
+The concrete renderer is available as `agent_token_ledger.render_footer`. `FooterEmitter` adds process-local exactly-once protection; distributed runtimes need a durable atomic equivalent.

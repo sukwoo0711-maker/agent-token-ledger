@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from threading import Lock
 from typing import Any
 
 
@@ -103,6 +104,8 @@ def build_report(trace: dict[str, Any]) -> dict[str, Any]:
             default=0.0,
         ),
         "agents": agent_rows,
+        "nonterminal_span_count": sum(span.get("status") == "running" for span in spans),
+        "abnormal_agent_count": sum(row["status"] not in {"ok", "running"} for row in agent_rows),
         "models": grouped("model"),
         "providers": grouped("provider"),
         "layers": grouped("layer", "unassigned"),
@@ -148,12 +151,20 @@ def render_markdown(report: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def render_footer(report: dict[str, Any]) -> str:
+def render_footer(report: dict[str, Any], *, scope: str = "root") -> str:
     """Render a compact, portable footer that never invents missing telemetry."""
+    if scope not in {"root", "agent"}:
+        raise ValueError("footer scope must be 'root' or 'agent'")
+    if scope == "agent":
+        raise ValueError("agent footer requires a separately built agent-scoped report")
+    if report.get("nonterminal_span_count", 0):
+        raise ValueError("root footer cannot be emitted while included spans are still running")
     cost = f"${report['total_cost_usd']:.6f}" if report["total_cost_usd"] is not None else "N/A"
+    state = "partial" if report.get("abnormal_agent_count", 0) else "complete"
     lines = [
         "---",
         "LLM usage",
+        f"Scope: {scope} | state {state}",
         f"Trace: {report['trace_id']} | {report['total_tokens']:,} tokens | "
         f"{report['wall_time_ms'] / 1000:.2f}s | cost {cost}",
         f"Coverage: attribution {report['attribution_coverage_pct']:.2f}% | "
@@ -163,7 +174,7 @@ def render_footer(report: dict[str, Any]) -> str:
     for row in report["agents"]:
         prefix = "+-- " * row["depth"]
         lines.append(
-            f"- {prefix}{row['agent_name']} [{row['layer']}]: "
+            f"- {prefix}{row['agent_name']} [{row['layer']}, status={row['status']}]: "
             f"{row['exclusive_tokens']:,} / {row['exclusive_share_pct']:.2f}% / {row['subtree_tokens']:,}"
         )
     lines.append(
@@ -175,3 +186,24 @@ def render_footer(report: dict[str, Any]) -> str:
         lines.append(f"Warning: {missing:,} measured tokens are not attributed to an agent.")
     lines.append("Accounting: exclusive shares partition measured usage; subtree values overlap by design.")
     return "\n".join(lines) + "\n"
+
+
+class FooterEmitter:
+    """Process-local idempotency guard for user-visible root footer emission.
+
+    Distributed runtimes should persist the emitted trace IDs in their own
+    atomic store; this guard covers a single process.
+    """
+
+    def __init__(self) -> None:
+        self._emitted_trace_ids: set[str] = set()
+        self._lock = Lock()
+
+    def emit(self, report: dict[str, Any]) -> str:
+        trace_id = str(report["trace_id"])
+        with self._lock:
+            if trace_id in self._emitted_trace_ids:
+                raise RuntimeError(f"root footer already emitted for trace {trace_id}")
+            footer = render_footer(report, scope="root")
+            self._emitted_trace_ids.add(trace_id)
+            return footer

@@ -28,12 +28,12 @@ The exact raw trace is intentionally gitignored because it contains response pre
 ## Automated verification
 
 ```text
-10 passed in 0.04s
+16 passed in 0.07s
 wheel: agent_token_ledger-0.1.0-py3-none-any.whl
 sdist: agent_token_ledger-0.1.0.tar.gz
 ```
 
-Tests cover nested exclusive/subtree accounting, cache and reasoning subset invariants, partial attribution, layer inheritance, duplicate instrumentation rejection, OpenTelemetry mapping, independent parallel branches, and bound thread context propagation.
+Tests cover nested exclusive/subtree accounting, cache and reasoning subset invariants, partial attribution, layer inheritance, duplicate instrumentation rejection, OpenTelemetry mapping, independent parallel branches, bound thread context propagation, ten-agent single-footer consolidation, terminal-state gating, partial failure usage, and trace-ID idempotency.
 
 ## Auto-grill result
 
