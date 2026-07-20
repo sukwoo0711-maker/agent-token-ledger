@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-token-ledger"
+version = "0.1.0"
+description = "Provider-neutral hierarchical token and cost attribution for multi-agent workflows"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "sukwoo0711-maker" }]
+keywords = ["agents", "llm", "observability", "tokens", "opentelemetry"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+]
+
+[project.scripts]
+agent-token-ledger = "agent_token_ledger.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_token_ledger"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
