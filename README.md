@@ -68,6 +68,11 @@ See [DESIGN.md](docs/DESIGN.md) for accounting rules and [AUTO_GRILL.md](docs/AU
 For personal AI stacks, copy the provider-neutral [Portable LLM Footer rule](docs/LLM_FOOTER_RULE.md). The [1:1 gap analysis](docs/RULE_GAP_ANALYSIS.md) explains how it extends a basic per-agent/model/token footer with coverage, enforcement, and privacy requirements.
 The [footer emission auto-grill](docs/FOOTER_EMISSION_GRILL.md) defines why ten subagents still produce one terminal root footer.
 
+For readers evaluating local inference, [Local LLM adoption: evidence, limits,
+and a practical decision framework](docs/LOCAL_LLM_ADOPTION_EVALUATION.md)
+reports an anonymized experiment and explains what its results do—and do not—
+support. The corpus-specific source material is intentionally excluded.
+
 ## Evidence and references
 
 - [OpenTelemetry GenAI semantic conventions](https://github.com/open-telemetry/semantic-conventions-genai)
