@@ -32,6 +32,7 @@ python -m pip install -e ".[dev]"
 python -m pytest
 python examples/ollama_multi_agent.py
 python -m agent_token_ledger artifacts/local-trace.json
+python -m agent_token_ledger artifacts/local-trace.json --footer
 ```
 
 The Ollama demo switches between a fast orchestrator model, a deeper analysis model, a verifier, and a final synthesizer. Override models as needed:
@@ -63,6 +64,8 @@ report = build_report(recorder.to_dict())
 The exporter maps agent spans to `gen_ai.operation.name=invoke_agent` and emits `gen_ai.client.token.usage` metric points with input/output token types. The canonical trace stays independent because the GenAI semantic conventions are still evolving.
 
 See [DESIGN.md](docs/DESIGN.md) for accounting rules and [AUTO_GRILL.md](docs/AUTO_GRILL.md) for adversarial review findings.
+
+For personal AI stacks, copy the provider-neutral [Portable LLM Footer rule](docs/LLM_FOOTER_RULE.md). The [1:1 gap analysis](docs/RULE_GAP_ANALYSIS.md) explains how it extends a basic per-agent/model/token footer with coverage, enforcement, and privacy requirements.
 
 ## Evidence and references
 

@@ -146,3 +146,32 @@ def render_markdown(report: dict[str, Any]) -> str:
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def render_footer(report: dict[str, Any]) -> str:
+    """Render a compact, portable footer that never invents missing telemetry."""
+    cost = f"${report['total_cost_usd']:.6f}" if report["total_cost_usd"] is not None else "N/A"
+    lines = [
+        "---",
+        "LLM usage",
+        f"Trace: {report['trace_id']} | {report['total_tokens']:,} tokens | "
+        f"{report['wall_time_ms'] / 1000:.2f}s | cost {cost}",
+        f"Coverage: attribution {report['attribution_coverage_pct']:.2f}% | "
+        f"cost {report['cost_coverage_pct']:.2f}%",
+        "Agents: exclusive tokens / trace share / subtree tokens",
+    ]
+    for row in report["agents"]:
+        prefix = "+-- " * row["depth"]
+        lines.append(
+            f"- {prefix}{row['agent_name']} [{row['layer']}]: "
+            f"{row['exclusive_tokens']:,} / {row['exclusive_share_pct']:.2f}% / {row['subtree_tokens']:,}"
+        )
+    lines.append(
+        "Models: "
+        + ", ".join(f"{row['model']} {row['tokens']:,} ({row['share_pct']:.2f}%)" for row in report["models"])
+    )
+    if report["attribution_coverage_pct"] < 100:
+        missing = report["total_tokens"] - report["attributed_tokens"]
+        lines.append(f"Warning: {missing:,} measured tokens are not attributed to an agent.")
+    lines.append("Accounting: exclusive shares partition measured usage; subtree values overlap by design.")
+    return "\n".join(lines) + "\n"
